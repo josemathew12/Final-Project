@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% set s = stats %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <h2 class="mb-0">Dashboard</h2>
+  <button id="analyzeBtn" class="btn btn-primary ms-auto">Analyze New Scan</button>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Total Scans</div>
+        <div class="h3 mb-0" id="kpi-total">{{ s.total }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Tumor Detected</div>
+        <div class="h3 mb-0" id="kpi-tumor">{{ s.tumors }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Non-Tumor</div>
+        <div class="h3 mb-0" id="kpi-non">{{ s.non_tumors }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Avg Confidence</div>
+        <div class="h3 mb-0" id="kpi-avg">{{ (s.avg_confidence * 100) | round(1) }}%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <!-- Recent Scans -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <h5 class="mb-0">Recent Scans</h5>
+        </div>
+        <ul id="recent-list" class="list-group list-group-flush">
+          {% for r in s.recent %}
+          <li class="list-group-item d-flex align-items-center">
+            <img src="{{ url_for('static', filename='uploads/' ~ r.filename) }}" class="rounded me-3" style="width:56px;height:56px;object-fit:cover;">
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ r.filename }}</div>
+              <div class="text-muted small">{{ r.created_at }}</div>
+            </div>
+            <span class="badge {{ 'bg-danger' if r.label == 'Tumor' else 'bg-success' }} me-2">{{ r.label }}</span>
+            <span class="text-muted small">{{ (r.confidence * 100) | round(1) }}%</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No scans yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donut + System -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Classification Overview</h5>
+        <canvas id="donutChart" height="240"></canvas>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-2">System Status</h5>
+        <div class="d-flex justify-content-between">
+          <div class="text-muted">Model Status</div>
+          <div class="text-success fw-semibold">Active</div>
+        </div>
+        <div class="d-flex justify-content-between">
+          <div class="text-muted">Avg Confidence</div>
+          <div class="fw-semibold">~{{ (s.avg_confidence * 100) | round(0) }}%</div>
+        </div>
+        <div class="d-flex justify-content-between">
+          <div class="text-muted">Processing Time</div>
+          <div class="fw-semibold">~1–3s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Analyze Modal -->
+<div class="modal fade" id="analyzeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="upload-form">
+        <div class="modal-header">
+          <h5 class="modal-title">Analyze New Scan</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="file" name="file" id="imageUpload" accept=".png,.jpg,.jpeg" class="form-control">
+          <div class="text-center mt-3" id="previewWrap" style="display:none;">
+            <img id="imagePreview" class="img-fluid rounded" style="max-height:260px;object-fit:cover;"/>
+          </div>
+          <div class="text-center small text-muted mt-2" id="predResult"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Close</button>
+          <button class="btn btn-primary" id="btn-predict" type="submit">Predict</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/newjs.js') }}"></script>
+<script>
+  // Sidebar "Analyze Scan" opens the same modal
+  document.getElementById('openAnalyze')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.NSAI_openAnalyze && window.NSAI_openAnalyze();
+  });
+
+  // initial chart render using server values (will be refreshed)
+  let donut;
+  window.renderDonut = function (tumor, nonTumor) {
+    const ctx = document.getElementById('donutChart');
+    if (!ctx) return;
+    if (donut) donut.destroy();
+    donut = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['Tumor', 'No Tumor'], datasets: [{ data: [tumor, nonTumor] }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  };
+  renderDonut({{ s.tumors }}, {{ s.non_tumors }});
+</script>
+{% endblock %}

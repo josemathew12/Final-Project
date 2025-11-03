@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-2">
+  <div class="text-center mb-4">
+    <div class="display-6 fw-bold">NeuroScan AI</div>
+    <p class="lead text-muted">AI-Powered Brain Tumor Detection and Classification using Convolutional Neural Networks</p>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h4>About the Project</h4>
+      <p><strong>NeuroScan AI</strong> is a brain tumor detection and classification system using CNNs to analyze brain MRI scans with high accuracy.</p>
+      <p>The goal is to automatically classify MRI scans as tumor or tumor-free, aiding early diagnosis and reducing radiologist workload.</p>
+      <p>Rapid, accurate preliminary assessments help clinicians focus on treatment planning while AI handles initial screening.</p>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100"><div class="card-body">
+        <h5>⚡ Fast Analysis</h5>
+        <p>Get classification results in seconds for rapid triage.</p>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100"><div class="card-body">
+        <h5>🎯 High Accuracy</h5>
+        <p>Trained on MRI datasets; targets 95%+ detection accuracy.</p>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100"><div class="card-body">
+        <h5>🧠 Tumor Classification</h5>
+        <p>Extendable to glioma, meningioma, pituitary subtypes.</p>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100"><div class="card-body">
+        <h5>💬 Medical Support</h5>
+        <p>Designed to assist clinicians; not a replacement for diagnosis.</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm my-4">
+    <div class="card-body">
+      <h4>Technology Stack</h4>
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Deep Learning Model</h6>
+          <ul>
+            <li>Convolutional Neural Networks (CNN)</li>
+            <li>Transfer Learning (optional)</li>
+            <li>Image Preprocessing Pipeline</li>
+            <li>Binary / Multi-class outputs</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <h6>Application Features</h6>
+          <ul>
+            <li>Real-time Image Processing</li>
+            <li>Confidence Scores</li>
+            <li>Historical Scan Tracking</li>
+            <li>Secure Uploads</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning shadow-sm mt-4">
+    <strong>Important Disclaimer:</strong>
+    This AI is an assistive tool and must not be used as the sole basis for medical decisions.
+    Always consult qualified healthcare professionals for diagnosis and treatment.
+  </div>
+</div>
+{% endblock %}
