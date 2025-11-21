@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Patient: {{ patient.name }} <span class="text-muted small">({{ patient.patient_id }})</span></h3>
+    <a class="btn btn-outline-secondary ms-auto" href="{{ url_for('patients') }}">Back to Patients</a>
+  </div>
+
+  {% if just_uploaded %}
+  <div class="alert alert-success">✅ Upload complete. Prediction saved and highlighted below.</div>
+  {% endif %}
+
+  {% if featured_scan %}
+  <div class="card shadow-sm mb-3">
+    <div class="row g-0">
+      <div class="col-md-5">
+        <img
+          src="{{ url_for('static', filename='uploads/' ~ featured_scan.filename) }}"
+          class="img-fluid rounded-start"
+          alt="MRI"
+          style="object-fit:cover; width:100%; height:100%; max-height:420px;"
+        >
+      </div>
+      <div class="col-md-7">
+        <div class="card-body">
+          <h5 class="card-title mb-1">Highlighted Scan</h5>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {{ 'bg-danger' if featured_scan.label=='Tumor' else 'bg-success' }}">{{ featured_scan.label }}</span>
+            <span class="text-muted small">Confidence: {{ (featured_scan.confidence*100)|round(1) }}%</span>
+          </div>
+          <div class="text-muted small mt-1">Time: {{ featured_scan.created_at }}</div>
+
+          <hr>
+          <h6>Patient Details</h6>
+          <div>Age: {{ patient.age or 'N/A' }}</div>
+          <div>Sex: {{ patient.sex or 'N/A' }}</div>
+          <a class="btn btn-sm btn-outline-primary mt-2" href="{{ url_for('risk', patient_id=patient.patient_id) }}">View Risk</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Upload new scan -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h5 class="mb-2">Upload New MRI</h5>
+      <form method="post" enctype="multipart/form-data">
+        <div class="row g-2">
+          <div class="col-md-9">
+            <input type="file" name="file" accept=".png,.jpg,.jpeg" class="form-control" required>
+          </div>
+          <div class="col-md-3 d-grid">
+            <button class="btn btn-primary" type="submit">Upload &amp; Predict</button>
+          </div>
+        </div>
+        <div class="form-text">Prediction runs immediately and appears below.</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Full Scan History -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="mb-3">Scan History</h5>
+      <div class="row g-3">
+        {% for s in scans %}
+        <div class="col-md-4">
+          <div class="card h-100">
+            <img src="{{ s.image_url }}" class="card-img-top" alt="MRI" style="object-fit:cover; height:200px;">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge {{ 'bg-danger' if s.label=='Tumor' else 'bg-success' }}">{{ s.label }}</span>
+                <span class="text-muted small">{{ (s.confidence*100)|round(1) }}%</span>
+              </div>
+              <div class="text-muted small mt-2">{{ s.created_at }}</div>
+              <a class="btn btn-sm btn-outline-primary mt-2" href="{{ url_for('tumor_details', scan_id=s.id) }}">Open Details</a>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-muted">No scans uploaded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

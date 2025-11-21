@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Patients</h3>
+
+  <!-- Create/Update patient + FIRST scan upload in one go -->
+  <form method="post" enctype="multipart/form-data" class="card p-3 shadow-sm mb-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Patient ID</label>
+        <input type="text" name="patient_id" class="form-control" placeholder="e.g., P-00001" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Age</label>
+        <input type="number" name="age" class="form-control" min="0" max="120">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Sex</label>
+        <select name="sex" class="form-select">
+          <option value="">Select</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">MRI Image (optional)</label>
+        <input type="file" name="file" accept=".png,.jpg,.jpeg" class="form-control">
+        <div class="form-text">Upload now; prediction runs and you’ll be redirected to the patient page showing it.</div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end">
+        <button class="btn btn-success" type="submit">Save Patient &amp; Upload</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Patient list -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="mb-3">Patient List</h5>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr>
+            <th>ID</th><th>Name</th><th>Age</th><th>Sex</th><th>Created</th><th>Open</th><th>Risk</th>
+          </tr></thead>
+        <tbody>
+          {% for p in patients %}
+          <tr>
+            <td><code>{{ p.patient_id }}</code></td>
+            <td>{{ p.name }}</td>
+            <td>{{ p.age or 'N/A' }}</td>
+            <td>{{ p.sex or 'N/A' }}</td>
+            <td class="text-muted small">{{ p.created_at }}</td>
+            <td>
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('patient_page', patient_id=p.patient_id) }}">History</a>
+            </td>
+            <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('risk', patient_id=p.patient_id) }}">Risk</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-muted">No patients yet.</td></tr>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

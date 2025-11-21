@@ -1,0 +1,14 @@
+{
+    "CNN": {
+        "Training Accuracy": 0.8108,
+        "Validation Accuracy": 0.8417,
+        "Training Loss": 0.4775,
+        "Validation Loss": 0.516
+    },
+    "EfficientNetB0": {
+        "Training Accuracy": 0.5408,
+        "Validation Accuracy": 0.5,
+        "Training Loss": 0.6926,
+        "Validation Loss": 0.6629
+    }
+}

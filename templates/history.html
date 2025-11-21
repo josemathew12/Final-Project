@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Scan History</h3>
+    <form method="get" class="ms-auto" style="max-width:360px;">
+      <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="Search by name / patient ID / label" value="{{ q }}">
+        <button class="btn btn-outline-secondary">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>ID</th><th>Patient</th><th>Label</th><th>Confidence</th><th>Time</th><th>Open</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in items %}
+            <tr>
+              <td><code>{{ s.id }}</code></td>
+              <td>{{ s.name or 'Unknown' }} — <code>{{ s.patient_id }}</code></td>
+              <td><span class="badge {{ 'bg-danger' if s.label=='Tumor' else 'bg-success' }}">{{ s.label }}</span></td>
+              <td>{{ (s.confidence*100)|round(1) }}%</td>
+              <td class="text-muted small">{{ s.created_at }}</td>
+              <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('tumor_details', scan_id=s.id) }}">Open</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted">No scans recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

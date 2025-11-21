@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Full Scan</h3>
+    <a class="btn btn-outline-secondary ms-auto" href="{{ url_for('open_gallery') }}">Back to Open</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <img src="{{ image_url }}" class="card-img-top" alt="MRI"
+             style="width:100%; height:78vh; object-fit:contain; background:#111;">
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5>Result</h5>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {{ 'bg-danger' if scan.label=='Tumor' else 'bg-success' }}">{{ scan.label }}</span>
+            <span class="text-muted small">Confidence: {{ (scan.confidence*100)|round(2) }}%</span>
+          </div>
+          <div class="text-muted small mt-2">Scanned at: {{ scan.created_at }}</div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5>Patient</h5>
+          <div><b>{{ patient.name }}</b> — <code>{{ patient.patient_id }}</code></div>
+          <div class="text-muted">Age: {{ patient.age or 'N/A' }} · Sex: {{ patient.sex or 'N/A' }}</div>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <a class="btn btn-primary" href="{{ url_for('tumor_details', scan_id=scan.id) }}">Open tumor details page</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('patient_page', patient_id=patient.patient_id) }}">Open patient history</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('risk', patient_id=patient.patient_id) }}">Open risk view</a>
+      </div>
+
+      <p class="small text-muted mt-3 mb-0">
+        The predicted label and confidence are decision-support only and must be interpreted by clinicians.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

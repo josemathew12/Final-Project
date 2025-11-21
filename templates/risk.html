@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Risk Overview</h3>
+    <a class="btn btn-outline-secondary ms-auto" href="{{ url_for('patients') }}">Back to Patients</a>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h5>Patient</h5>
+      <div><b>{{ patient.name }}</b> — <code>{{ patient.patient_id }}</code></div>
+      <div class="text-muted">Age: {{ patient.age or 'N/A' }} · Sex: {{ patient.sex or 'N/A' }}</div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5>Current Risk Level</h5>
+          <div class="display-6">{{ risk_level }}</div>
+          <p class="mt-2">{{ advice }}</p>
+          {% if latest %}
+          <div class="text-muted small">Latest scan: {{ latest.label }} ({{ (latest.confidence*100)|round(1) }}%) at {{ latest.created_at }}</div>
+          {% else %}
+          <div class="text-muted small">No scans recorded.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5>Patient Scan History</h5>
+          <ul class="list-group list-group-flush">
+            {% for r in scans %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>
+                <code>#{{ r.id }}</code> — {{ r.created_at }}
+              </span>
+              <span>
+                <span class="badge {{ 'bg-danger' if r.label=='Tumor' else 'bg-success' }}">{{ r.label }}</span>
+                <span class="text-muted small ms-2">{{ (r.confidence*100)|round(1) }}%</span>
+                <a class="btn btn-sm btn-outline-secondary ms-2" href="{{ url_for('tumor_details', scan_id=r.id) }}">Open</a>
+              </span>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted">No scans yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning mt-4">
+    <strong>Disclaimer:</strong> Risk scores and labels are for decision support only and must be interpreted by qualified clinicians.
+  </div>
+</div>
+{% endblock %}

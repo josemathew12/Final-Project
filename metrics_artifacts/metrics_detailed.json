@@ -1,0 +1,42 @@
+{
+  "accuracy": 0.8233,
+  "roc_auc": 0.8255,
+  "pr_auc": 0.8689,
+  "classification_report": {
+    "No Tumor": {
+      "precision": 0.9663461538461539,
+      "recall": 0.67,
+      "f1-score": 0.7913385826771654,
+      "support": 300.0
+    },
+    "Yes Tumor": {
+      "precision": 0.7474489795918368,
+      "recall": 0.9766666666666667,
+      "f1-score": 0.846820809248555,
+      "support": 300.0
+    },
+    "accuracy": 0.8233333333333334,
+    "macro avg": {
+      "precision": 0.8568975667189953,
+      "recall": 0.8233333333333334,
+      "f1-score": 0.8190796959628601,
+      "support": 600.0
+    },
+    "weighted avg": {
+      "precision": 0.8568975667189953,
+      "recall": 0.8233333333333334,
+      "f1-score": 0.8190796959628602,
+      "support": 600.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      201,
+      99
+    ],
+    [
+      7,
+      293
+    ]
+  ]
+}

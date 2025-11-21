@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Tumor Details</h3>
+    <a class="btn btn-outline-secondary ms-auto" href="{{ url_for('history') }}">Back to History</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <img src="{{ image_url }}" class="card-img-top" alt="MRI" style="object-fit:cover; max-height:420px;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="text-muted small">Result</div>
+              <div class="h5 mb-0">
+                <span class="badge {{ 'bg-danger' if scan.label=='Tumor' else 'bg-success' }}">{{ scan.label }}</span>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="text-muted small">Confidence</div>
+              <div class="h5 mb-0">{{ (scan.confidence * 100) | round(2) }}%</div>
+            </div>
+          </div>
+          <div class="text-muted small mt-2">Scanned at: {{ scan.created_at }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5>Patient</h5>
+          <div><b>{{ patient.name }}</b> — <code>{{ patient.patient_id }}</code></div>
+          <div class="text-muted">Age: {{ patient.age or 'N/A' }} · Sex: {{ patient.sex or 'N/A' }}</div>
+          <div class="mt-2">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('risk', patient_id=patient.patient_id) }}">View Risk</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Clinical Notes (auto)</h5>
+          {% if scan.label == 'Tumor' %}
+            <p>Model indicates tumor presence. Consider follow-up MRI with contrast and clinical correlation. Confidence {{ (scan.confidence*100)|round(1) }}%.</p>
+          {% else %}
+            <p>No tumor detected. If symptoms persist or clinical suspicion remains, schedule follow-up imaging. Confidence {{ (scan.confidence*100)|round(1) }}%.</p>
+          {% endif %}
+          <p class="small text-muted">This is an assistive tool; not a substitute for professional diagnosis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

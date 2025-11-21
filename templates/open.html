@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0">Open — Latest MRI per Patient</h3>
+    <span class="ms-3 text-muted small">Click any card to view full details</span>
+  </div>
+
+  <div class="row g-3">
+    {% for c in cards %}
+    <div class="col-md-4 col-lg-3">
+      <div class="card h-100 shadow-sm">
+        <a href="{{ url_for('open_full', scan_id=c.id) }}">
+          <img src="{{ c.image_url }}" class="card-img-top" alt="MRI" style="object-fit:cover; height:220px;">
+        </a>
+        <div class="card-body">
+          <div class="fw-semibold text-truncate">{{ c.name or 'Unknown' }}</div>
+          <div class="text-muted small"><code>{{ c.patient_id }}</code></div>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="badge {{ 'bg-danger' if c.label=='Tumor' else 'bg-success' }}">{{ c.label }}</span>
+            <span class="text-muted small">{{ (c.confidence*100)|round(1) }}%</span>
+          </div>
+          <div class="text-muted small mt-1">{{ c.created_at }}</div>
+          <a class="btn btn-sm btn-outline-primary mt-2" href="{{ url_for('open_full', scan_id=c.id) }}">Open Details</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+      <div class="col-12 text-muted">No scans yet. Upload from Dashboard or Patients.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

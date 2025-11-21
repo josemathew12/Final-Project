@@ -1,0 +1,62 @@
+[
+  {
+    "id": "da850a30-cad1-448e-be1b-84850cf6347e",
+    "timestamp_utc": "20251107_150940",
+    "patient": {
+      "patient_id": "2",
+      "name": "Keegan",
+      "age": "23",
+      "sex": "M"
+    },
+    "image_path": "static/uploads/20251107_150940_y6.jpg",
+    "result": {
+      "has_tumor": true,
+      "prob_yes": 0.9890314936637878
+    }
+  },
+  {
+    "id": "50a6a5bc-b75c-4c58-b053-7502fead51a2",
+    "timestamp_utc": "20251107_144712",
+    "patient": {
+      "patient_id": "1",
+      "name": "Jose",
+      "age": "22",
+      "sex": "M"
+    },
+    "image_path": "static/uploads/20251107_144712_no1.jpg",
+    "result": {
+      "has_tumor": false,
+      "prob_yes": 0.28903114795684814
+    }
+  },
+  {
+    "id": "87c3d303-5a21-4e89-9314-8d312f66cf33",
+    "timestamp_utc": "20251107_142232",
+    "patient": {},
+    "image_path": "static/uploads/20251107_142232_no10.jpg",
+    "result": {
+      "has_tumor": false,
+      "prob_yes": 0.00919356383383274
+    }
+  },
+  {
+    "id": "72280ac5-3775-4ef2-88a8-14f610aec88c",
+    "timestamp_utc": "20251107_142220",
+    "patient": {},
+    "image_path": "static/uploads/20251107_142220_y2.jpg",
+    "result": {
+      "has_tumor": true,
+      "prob_yes": 0.9994161128997803
+    }
+  },
+  {
+    "id": "c3d35618-ade6-47e6-ba60-8142b466d99d",
+    "timestamp_utc": "20251107_142140",
+    "patient": {},
+    "image_path": "static/uploads/20251107_142140_Screenshot_2025-11-07_at_12.30.07_PM.png",
+    "result": {
+      "has_tumor": true,
+      "prob_yes": 0.999997615814209
+    }
+  }
+]
