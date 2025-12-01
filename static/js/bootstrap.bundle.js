@@ -51,21 +51,13 @@ function _inheritsLoose(subClass, superClass) {
   subClass.__proto__ = superClass;
 }
 
-/**
- * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0): util.js
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * --------------------------------------------------------------------------
- */
+
 
 var Util = function ($$$1) {
-  /**
-   * ------------------------------------------------------------------------
-   * Private TransitionEnd Helpers
-   * ------------------------------------------------------------------------
-   */
+
+  
   var transition = false;
-  var MAX_UID = 1000000; // Shoutout AngusCroll (https://goo.gl/pxwQGp)
+  var MAX_UID = 1000000; 
 
   function toType(obj) {
     return {}.toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
@@ -77,10 +69,10 @@ var Util = function ($$$1) {
       delegateType: transition.end,
       handle: function handle(event) {
         if ($$$1(event.target).is(this)) {
-          return event.handleObj.handler.apply(this, arguments); // eslint-disable-line prefer-rest-params
+          return event.handleObj.handler.apply(this, arguments); 
         }
 
-        return undefined; // eslint-disable-line no-undefined
+        return undefined; 
       }
     };
   }
@@ -120,24 +112,19 @@ var Util = function ($$$1) {
   }
 
   function escapeId(selector) {
-    // We escape IDs in case of special selectors (selector = '#myId:something')
-    // $.escapeSelector does not exist in jQuery < 3
+   
     selector = typeof $$$1.escapeSelector === 'function' ? $$$1.escapeSelector(selector).substr(1) : selector.replace(/(:|\.|\[|\]|,|=|@)/g, '\\$1');
     return selector;
   }
-  /**
-   * --------------------------------------------------------------------------
-   * Public Util Api
-   * --------------------------------------------------------------------------
-   */
 
+   
 
   var Util = {
     TRANSITION_END: 'bsTransitionEnd',
     getUID: function getUID(prefix) {
       do {
-        // eslint-disable-next-line no-bitwise
-        prefix += ~~(Math.random() * MAX_UID); // "~~" acts like a faster Math.floor() here
+        
+        prefix += ~~(Math.random() * MAX_UID); 
       } while (document.getElementById(prefix));
 
       return prefix;
@@ -147,7 +134,7 @@ var Util = function ($$$1) {
 
       if (!selector || selector === '#') {
         selector = element.getAttribute('href') || '';
-      } // If it's an ID
+      }
 
 
       if (selector.charAt(0) === '#') {
@@ -191,19 +178,10 @@ var Util = function ($$$1) {
   return Util;
 }($);
 
-/**
- * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0): alert.js
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * --------------------------------------------------------------------------
- */
+
 
 var Alert = function ($$$1) {
-  /**
-   * ------------------------------------------------------------------------
-   * Constants
-   * ------------------------------------------------------------------------
-   */
+  
   var NAME = 'alert';
   var VERSION = '4.0.0';
   var DATA_KEY = 'bs.alert';
@@ -223,25 +201,23 @@ var Alert = function ($$$1) {
     ALERT: 'alert',
     FADE: 'fade',
     SHOW: 'show'
-    /**
-     * ------------------------------------------------------------------------
-     * Class Definition
-     * ------------------------------------------------------------------------
-     */
+
+    //Class Definition//
+     
 
   };
 
   var Alert =
-  /*#__PURE__*/
+  
   function () {
     function Alert(element) {
       this._element = element;
-    } // Getters
+    } 
 
 
     var _proto = Alert.prototype;
 
-    // Public
+   
     _proto.close = function close(element) {
       element = element || this._element;
 
@@ -259,7 +235,7 @@ var Alert = function ($$$1) {
     _proto.dispose = function dispose() {
       $$$1.removeData(this._element, DATA_KEY);
       this._element = null;
-    }; // Private
+    }; 
 
 
     _proto._getRootElement = function _getRootElement(element) {
@@ -301,7 +277,7 @@ var Alert = function ($$$1) {
 
     _proto._destroyElement = function _destroyElement(element) {
       $$$1(element).detach().trigger(Event.CLOSED).remove();
-    }; // Static
+    }; 
 
 
     Alert._jQueryInterface = function _jQueryInterface(config) {
@@ -338,19 +314,12 @@ var Alert = function ($$$1) {
     }]);
     return Alert;
   }();
-  /**
-   * ------------------------------------------------------------------------
-   * Data Api implementation
-   * ------------------------------------------------------------------------
-   */
-
+  
+  //Data Api implementation//
+   
 
   $$$1(document).on(Event.CLICK_DATA_API, Selector.DISMISS, Alert._handleDismiss(new Alert()));
-  /**
-   * ------------------------------------------------------------------------
-   * jQuery
-   * ------------------------------------------------------------------------
-   */
+  
 
   $$$1.fn[NAME] = Alert._jQueryInterface;
   $$$1.fn[NAME].Constructor = Alert;
@@ -363,19 +332,10 @@ var Alert = function ($$$1) {
   return Alert;
 }($);
 
-/**
- * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0): button.js
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * --------------------------------------------------------------------------
- */
-
 var Button = function ($$$1) {
-  /**
-   * ------------------------------------------------------------------------
-   * Constants
-   * ------------------------------------------------------------------------
-   */
+ 
+  //Constants//
+   
   var NAME = 'button';
   var VERSION = '4.0.0';
   var DATA_KEY = 'bs.button';
@@ -397,25 +357,23 @@ var Button = function ($$$1) {
   var Event = {
     CLICK_DATA_API: "click" + EVENT_KEY + DATA_API_KEY,
     FOCUS_BLUR_DATA_API: "focus" + EVENT_KEY + DATA_API_KEY + " " + ("blur" + EVENT_KEY + DATA_API_KEY)
-    /**
-     * ------------------------------------------------------------------------
-     * Class Definition
-     * ------------------------------------------------------------------------
-     */
+    
+    //Class Definition//
+     
 
   };
 
   var Button =
-  /*#__PURE__*/
+
   function () {
     function Button(element) {
       this._element = element;
-    } // Getters
+    } 
 
 
     var _proto = Button.prototype;
 
-    // Public
+  
     _proto.toggle = function toggle() {
       var triggerChangeEvent = true;
       var addAriaPressed = true;
@@ -463,7 +421,7 @@ var Button = function ($$$1) {
     _proto.dispose = function dispose() {
       $$$1.removeData(this._element, DATA_KEY);
       this._element = null;
-    }; // Static
+    }; 
 
 
     Button._jQueryInterface = function _jQueryInterface(config) {
@@ -509,11 +467,9 @@ var Button = function ($$$1) {
     var button = $$$1(event.target).closest(Selector.BUTTON)[0];
     $$$1(button).toggleClass(ClassName.FOCUS, /^focus(in)?$/.test(event.type));
   });
-  /**
-   * ------------------------------------------------------------------------
-   * jQuery
-   * ------------------------------------------------------------------------
-   */
+  
+  //jQuery//
+   
 
   $$$1.fn[NAME] = Button._jQueryInterface;
   $$$1.fn[NAME].Constructor = Button;
@@ -526,19 +482,10 @@ var Button = function ($$$1) {
   return Button;
 }($);
 
-/**
- * --------------------------------------------------------------------------
- * Bootstrap (v4.0.0): carousel.js
- * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
- * --------------------------------------------------------------------------
- */
+
 
 var Carousel = function ($$$1) {
-  /**
-   * ------------------------------------------------------------------------
-   * Constants
-   * ------------------------------------------------------------------------
-   */
+  
   var NAME = 'carousel';
   var VERSION = '4.0.0';
   var DATA_KEY = 'bs.carousel';
@@ -546,11 +493,11 @@ var Carousel = function ($$$1) {
   var DATA_API_KEY = '.data-api';
   var JQUERY_NO_CONFLICT = $$$1.fn[NAME];
   var TRANSITION_DURATION = 600;
-  var ARROW_LEFT_KEYCODE = 37; // KeyboardEvent.which value for left arrow key
+  var ARROW_LEFT_KEYCODE = 37; 
 
-  var ARROW_RIGHT_KEYCODE = 39; // KeyboardEvent.which value for right arrow key
+  var ARROW_RIGHT_KEYCODE = 39; 
 
-  var TOUCHEVENT_COMPAT_WAIT = 500; // Time for mouse compat events to fire after touch
+  var TOUCHEVENT_COMPAT_WAIT = 500; 
 
   var Default = {
     interval: 5000,
@@ -600,16 +547,13 @@ var Carousel = function ($$$1) {
     INDICATORS: '.carousel-indicators',
     DATA_SLIDE: '[data-slide], [data-slide-to]',
     DATA_RIDE: '[data-ride="carousel"]'
-    /**
-     * ------------------------------------------------------------------------
-     * Class Definition
-     * ------------------------------------------------------------------------
-     */
+    
+    //Class Definition//
+    
 
   };
-
   var Carousel =
-  /*#__PURE__*/
+
   function () {
     function Carousel(element, config) {
       this._items = null;
@@ -623,12 +567,12 @@ var Carousel = function ($$$1) {
       this._indicatorsElement = $$$1(this._element).find(Selector.INDICATORS)[0];
 
       this._addEventListeners();
-    } // Getters
+    }
 
 
     var _proto = Carousel.prototype;
 
-    // Public
+    //Public//
     _proto.next = function next() {
       if (!this._isSliding) {
         this._slide(Direction.NEXT);
@@ -636,8 +580,7 @@ var Carousel = function ($$$1) {
     };
 
     _proto.nextWhenVisible = function nextWhenVisible() {
-      // Don't call next when the page isn't visible
-      // or the carousel or its parent isn't visible
+    
       if (!document.hidden && $$$1(this._element).is(':visible') && $$$1(this._element).css('visibility') !== 'hidden') {
         this.next();
       }
@@ -718,7 +661,7 @@ var Carousel = function ($$$1) {
       this._isSliding = null;
       this._activeElement = null;
       this._indicatorsElement = null;
-    }; // Private
+    }; 
 
 
     _proto._getConfig = function _getConfig(config) {
@@ -744,13 +687,7 @@ var Carousel = function ($$$1) {
         });
 
         if ('ontouchstart' in document.documentElement) {
-          // If it's a touch-enabled device, mouseenter/leave are fired as
-          // part of the mouse compatibility events on first tap - the carousel
-          // would stop cycling until user tapped out of it;
-          // here, we listen for touchend, explicitly pause the carousel
-          // (as if it's the second time we tap on it, mouseenter compat event
-          // is NOT fired) and after a timeout (to allow for mouse compatibility
-          // events to fire) we explicitly restart cycling
+         
           $$$1(this._element).on(Event.TOUCHEND, function () {
             _this2.pause();
 
@@ -874,7 +811,7 @@ var Carousel = function ($$$1) {
       }
 
       if (!activeElement || !nextElement) {
-        // Some weirdness is happening, so we bail
+        
         return;
       }
 
@@ -916,7 +853,7 @@ var Carousel = function ($$$1) {
       if (isCycling) {
         this.cycle();
       }
-    }; // Static
+    }; 
 
 
     Carousel._jQueryInterface = function _jQueryInterface(config) {

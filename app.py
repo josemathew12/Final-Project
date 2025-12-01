@@ -10,33 +10,39 @@ from werkzeug.utils import secure_filename
 import cv2
 from tensorflow.keras.models import load_model
 
-# ---------------- CONFIG ----------------
+# Flask + model setup
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
-# Your deployed model (64x64 CNN from mainTrain.py)
+# Path to the trained CNN model (64x64) exported from mainTrain.py
 MODEL_PATH = "BrainTumorModel.h5"
 
-# Where uploaded MRI images are stored
+# Folder where uploaded MRI images are stored
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Load model once at startup
+# Load the model once when the app starts
 model = load_model(MODEL_PATH, compile=False)
 print("✅ Model loaded. Go to http://127.0.0.1:5000/")
 
+# SQLite database file
 DB_PATH = "neuroscan.db"
 
 
-# ---------------- DB HELPERS ----------------
+# Database helpers
 def DB():
+    """Open a new database connection."""
     return sqlite3.connect(DB_PATH)
 
+
 def init_db():
-    """Create tables if missing and migrate old DBs to latest schema."""
+    """
+    Create tables if they don't exist and make sure
+    the schema works for both new and old databases.
+    """
     with DB() as con:
         cur = con.cursor()
 
-        # Patients table
+        # Patients table keeps basic patient information
         cur.execute("""
             CREATE TABLE IF NOT EXISTS patients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +54,7 @@ def init_db():
             )
         """)
 
-        # Scans table
+        # Scans table stores each MRI upload and prediction
         cur.execute("""
             CREATE TABLE IF NOT EXISTS scans (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,16 +66,17 @@ def init_db():
             )
         """)
 
-        # Add missing columns for older DBs
+        # Helper to see if a column exists in a table
         def has_column(table, col):
             cur.execute(f"PRAGMA table_info({table})")
             return any(r[1] == col for r in cur.fetchall())
 
+        # Older DBs may not have patient_id on scans
         if not has_column("scans", "patient_id"):
             cur.execute("ALTER TABLE scans ADD COLUMN patient_id TEXT")
             cur.execute("UPDATE scans SET patient_id = COALESCE(patient_id, 'UNKNOWN')")
 
-        # Seed placeholder patient for old rows if needed
+        # Make sure there is always an 'UNKNOWN' patient as a fallback
         cur.execute("SELECT 1 FROM patients WHERE patient_id='UNKNOWN'")
         if not cur.fetchone():
             cur.execute(
@@ -79,8 +86,12 @@ def init_db():
 
         con.commit()
 
+
 def upsert_patient(patient_id: str, name: str, age, sex: str):
-    """Insert or update patient basic info."""
+    """
+    If the patient exists, update basic details.
+    If not, create a new patient row.
+    """
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -102,7 +113,9 @@ def upsert_patient(patient_id: str, name: str, age, sex: str):
             )
         con.commit()
 
+
 def get_patient(patient_id: str):
+    """Return a patient as a dict, or None if not found."""
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -110,7 +123,9 @@ def get_patient(patient_id: str):
         r = cur.fetchone()
         return dict(r) if r else None
 
+
 def insert_scan(patient_id: str, filename: str, label: str, confidence: float):
+    """Insert a scan row and return its ID."""
     with DB() as con:
         cur = con.cursor()
         cur.execute(
@@ -120,7 +135,9 @@ def insert_scan(patient_id: str, filename: str, label: str, confidence: float):
         con.commit()
         return cur.lastrowid
 
+
 def get_scan(scan_id: int):
+    """Return a scan row by ID as a dict, or None."""
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -128,7 +145,9 @@ def get_scan(scan_id: int):
         r = cur.fetchone()
         return dict(r) if r else None
 
+
 def scans_for_patient(patient_id: str):
+    """Return all scans for a given patient, newest first."""
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -138,8 +157,12 @@ def scans_for_patient(patient_id: str):
         )
         return [dict(r) for r in cur.fetchall()]
 
+
 def all_scans(q: str = ""):
-    """Searchable list for History page."""
+    """
+    Return all scans for the History page.
+    If q is non-empty, filter by patient name, ID, or label.
+    """
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -161,8 +184,15 @@ def all_scans(q: str = ""):
             """)
         return [dict(r) for r in cur.fetchall()]
 
+
 def get_stats(limit_recent: int = 10):
-    """Aggregate statistics for Dashboard and side console."""
+    """
+    Collect summary stats for the dashboard:
+    - total scans
+    - tumor / no-tumor counts
+    - average confidence
+    - most recent scans
+    """
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -197,8 +227,12 @@ def get_stats(limit_recent: int = 10):
         )
 
 
-# ---------------- MODEL HELPERS ----------------
+# Model helpers
 def preprocess_image(image_path, target_size=(64, 64)):
+    """
+    Read an image from disk, convert to RGB, resize to model size,
+    normalize to [0,1], and add batch dimension.
+    """
     image = cv2.imread(image_path)
     if image is None:
         raise ValueError("Image not found or invalid format.")
@@ -207,9 +241,18 @@ def preprocess_image(image_path, target_size=(64, 64)):
     image = np.array(image, dtype=np.float32) / 255.0
     return np.expand_dims(image, axis=0)
 
+
 def predict_class(img_path):
+    """
+    Predict tumor / no-tumor for a single MRI image.
+    Returns (label, confidence).
+    """
     img = preprocess_image(img_path)
     pred = model.predict(img, verbose=0)[0]
+
+    # Model can be either:
+    # - single sigmoid output
+    # - two-class softmax
     if len(pred) == 1:
         prob_yes = float(pred[0])
         label = "Tumor" if prob_yes >= 0.5 else "No Tumor"
@@ -218,30 +261,39 @@ def predict_class(img_path):
         idx = int(np.argmax(pred))
         label = "Tumor" if idx == 1 else "No Tumor"
         conf = float(pred[idx])
+
     return label, conf
 
 
-# ---------------- ROUTES ----------------
+# Routes
 @app.route("/", methods=["GET"])
 def dashboard():
+    """Main dashboard with KPIs and recent scans."""
     stats = get_stats(limit_recent=10)
     return render_template("dashboard.html", stats=stats)
 
+
 @app.route("/about", methods=["GET"])
 def about():
+    """Project overview / About page."""
     return render_template("about.html")
 
-# Create / update patients + optional first scan
+
 @app.route("/patients", methods=["GET", "POST"])
 def patients():
+    """
+    GET  → show patient list and create form.
+    POST → create or update a patient and (optionally) upload their first MRI.
+            After POST, redirect to that patient's page with recent scan highlighted.
+    """
     if request.method == "POST":
         pid = (request.form.get("patient_id") or "").strip()
         name = (request.form.get("name") or "").strip()
         age = request.form.get("age", type=int)
         sex = (request.form.get("sex") or "").strip()
 
+        # Require at least patient ID and name
         if not pid or not name:
-            # Missing required fields → just reload list
             with DB() as con:
                 con.row_factory = sqlite3.Row
                 cur = con.cursor()
@@ -249,9 +301,10 @@ def patients():
                 plist = [dict(r) for r in cur.fetchall()]
             return render_template("patients.html", patients=plist)
 
+        # Insert or update patient
         upsert_patient(pid, name, age, sex)
 
-        # Optional MRI upload
+        # Optional MRI upload together with patient creation
         f = request.files.get("file")
         uploaded_filename = ""
         if f and f.filename:
@@ -265,6 +318,7 @@ def patients():
             insert_scan(pid, unique, label, confidence)
             uploaded_filename = unique
 
+        # Go to patient page; if a scan was uploaded, it will be highlighted
         return redirect(url_for("patient_page", patient_id=pid, uploaded=1, file=uploaded_filename))
 
     # GET → list all patients
@@ -275,9 +329,13 @@ def patients():
         plist = [dict(r) for r in cur.fetchall()]
     return render_template("patients.html", patients=plist)
 
-# Patient page (details + scan history + upload more scans)
+
 @app.route("/patients/<patient_id>", methods=["GET", "POST"])
 def patient_page(patient_id):
+    """
+    Show a single patient's details and scan history.
+    POST allows uploading additional MRIs for this patient.
+    """
     p = get_patient(patient_id)
     if not p:
         return f"Patient {patient_id} not found", 404
@@ -296,6 +354,7 @@ def patient_page(patient_id):
             insert_scan(patient_id, unique, label, confidence)
             uploaded_filename = unique
 
+        # After upload, reload page and highlight the new scan
         return redirect(url_for("patient_page", patient_id=patient_id, uploaded=1, file=uploaded_filename))
 
     scans = scans_for_patient(patient_id)
@@ -305,6 +364,7 @@ def patient_page(patient_id):
     just_uploaded = request.args.get("uploaded") == "1"
     just_file = (request.args.get("file") or "").strip()
 
+    # Decide which scan to show as the large "featured" item
     featured_scan = None
     if just_file:
         for s in scans:
@@ -322,14 +382,21 @@ def patient_page(patient_id):
         just_uploaded=just_uploaded
     )
 
+
 @app.route("/history")
 def history():
+    """Global scan history table with optional search."""
     q = request.args.get("q", "").strip()
     items = all_scans(q)
     return render_template("history.html", items=items, q=q)
 
+
 @app.route("/risk/<patient_id>")
 def risk(patient_id):
+    """
+    Simple risk summary built from the latest scan
+    (label + confidence mapped to a textual risk level).
+    """
     p = get_patient(patient_id)
     if not p:
         return f"Patient {patient_id} not found", 404
@@ -353,9 +420,14 @@ def risk(patient_id):
     return render_template("risk.html", patient=p, latest=latest, scans=scans,
                            risk_level=risk_level, advice=advice)
 
-# Dashboard modal upload
+
 @app.route("/predict", methods=["POST"])
 def predict():
+    """
+    Handle uploads from the dashboard modal:
+    create/update patient, run prediction, then
+    redirect to the tumor details page for that scan.
+    """
     patient_id = (request.form.get("patient_id") or "").strip()
     name = (request.form.get("name") or "").strip()
     age = request.form.get("age", type=int)
@@ -380,20 +452,30 @@ def predict():
     scan_id = insert_scan(patient_id, unique, label, confidence)
     return redirect(url_for("tumor_details", scan_id=scan_id))
 
-# Tumor details (small card, plus patient + notes)
+
 @app.route("/tumor/<int:scan_id>")
 def tumor_details(scan_id):
+    """
+    Show one scan:
+    - image
+    - predicted label + confidence
+    - patient info
+    - simple auto note (in template)
+    """
     scan = get_scan(scan_id)
     if not scan:
         return "Scan not found", 404
     patient = get_patient(scan["patient_id"])
     image_url = url_for("static", filename=f"uploads/{scan['filename']}")
-    # IMPORTANT: template file name is exactly Tumordetails.html
     return render_template("Tumordetails.html", scan=scan, patient=patient, image_url=image_url)
 
-# Open gallery – latest MRI per patient
+
 @app.route("/open")
 def open_gallery():
+    """
+    Show the latest scan for each patient as a card grid.
+    Used by open.html.
+    """
     with DB() as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -403,9 +485,9 @@ def open_gallery():
                 p.name,
                 p.age,
                 p.sex,
-                s.id        AS scan_id,
-                s.filename  AS filename,
-                s.label     AS label,
+                s.id         AS scan_id,
+                s.filename   AS filename,
+                s.label      AS label,
                 s.confidence AS confidence,
                 s.created_at AS created_at
             FROM patients p
@@ -436,9 +518,12 @@ def open_gallery():
 
     return render_template("open.html", cards=cards)
 
-# Full-screen MRI view from Open page
+
 @app.route("/open/<int:scan_id>")
 def open_full(scan_id):
+    """
+    Full-screen MRI and details view from the Open gallery.
+    """
     scan = get_scan(scan_id)
     if not scan:
         return "Scan not found", 404
@@ -446,13 +531,13 @@ def open_full(scan_id):
     image_url = url_for("static", filename=f"uploads/{scan['filename']}")
     return render_template("open_full.html", scan=scan, patient=patient, image_url=image_url)
 
-# API for side console KPIs
+
 @app.route("/api/stats")
 def api_stats():
+    """JSON stats endpoint used by dashboard / side console."""
     return jsonify(get_stats(limit_recent=10))
 
 
-# ---------------- MAIN ----------------
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)

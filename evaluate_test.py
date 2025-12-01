@@ -12,7 +12,7 @@ import cv2
 from PIL import Image, UnidentifiedImageError
 
 import matplotlib
-matplotlib.use("Agg")  # allows saving figures without display
+matplotlib.use("Agg")  
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import (
@@ -31,7 +31,7 @@ from sklearn.metrics import (
 from tensorflow.keras.models import load_model
 
 
-# ---------- Settings ----------
+
 CLASS_NAMES = ["No Tumor", "Yes Tumor"]  # 0=no, 1=yes
 VALID_EXT = (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff")
 
@@ -235,7 +235,7 @@ def main():
     print(f"Results saved to: {out_dir}")
     print(f"Accuracy: {acc*100:.2f}% | Precision: {p*100:.2f}% | Recall: {r*100:.2f}% | F1: {f1*100:.2f}%")
 
-    # Auto-open the confusion matrix and ROC (if available)
+    
     try:
         webbrowser.open(f"file://{cm_path.resolve()}")
         if roc_auc is not None:

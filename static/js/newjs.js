@@ -1,5 +1,5 @@
 (function () {
-  // ---------- Modal helpers ----------
+  // Modal helpers 
   let analyzeModal;
   function ensureModal() {
     if (!analyzeModal) {
@@ -42,7 +42,7 @@
     }
   });
 
-  // Submit -> /predict (saves to analysis_log.json)
+  // Submit 
   form?.addEventListener('submit', function (e) {
     e.preventDefault();
     if (!uploadInput.files.length) {
@@ -70,7 +70,7 @@
       });
   });
 
-  // ---------- Recent click-to-reopen ----------
+  // Recent click-to-reopen 
   function bindRecentClicks() {
     document.querySelectorAll('.recent-item').forEach(li => {
       li.addEventListener('click', () => {
@@ -113,7 +113,7 @@
     });
   }
 
-  // ---------- Dashboard refreshers ----------
+  // Dashboard refresher
   function refreshDashboard() {
     fetch('/recent')
       .then(r => r.json())
@@ -174,7 +174,7 @@
       .catch(()=>{});
   }
 
-  // ---------- Side Console (Offcanvas) ----------
+  // Side Console (
   function refreshSideConsole() {
     fetch('/stats')
       .then(r => r.json())

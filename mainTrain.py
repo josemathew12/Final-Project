@@ -25,40 +25,42 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLRO
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
-# -----------------------------
-# Reproducibility + (optional) GPU memory growth
-# -----------------------------
+
+# Basic setup: random seeds and optional GPU memory growth
 SEED = 42
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
+
 for gpu in tf.config.list_physical_devices('GPU'):
     try:
         tf.config.experimental.set_memory_growth(gpu, True)
     except Exception:
         pass
 
-# -----------------------------
-# Parameters
-# -----------------------------
-image_directory = 'datasets'   # your dataset folder path (contains /no and /yes)
 
-# Model 1 (CNN)
+# Training configuration
+image_directory = 'datasets'   # folder that contains /no and /yes
+
+# CNN model settings
 INPUT_SIZE_CNN = 64
 BATCH_SIZE_CNN = 16
 EPOCHS_CNN = 25
 
-# Model 2 (EfficientNetB0)
+# EfficientNetB0 settings
 INPUT_SIZE_EFF = 224
 BATCH_SIZE_EFF = 16
-EPOCHS_EFF_FROZEN = 12   # stage 1 (frozen base)
-EPOCHS_EFF_FT = 8        # stage 2 (fine-tune)
+EPOCHS_EFF_FROZEN = 12   # stage 1: base frozen
+EPOCHS_EFF_FT = 8        # stage 2: fine-tuning
 
 CLASSES = ('no', 'yes')
 
-# -----------------------------
-# Dataset checking & loading
-# -----------------------------
+
+# Dataset helpers
 def check_dataset_dirs(base_dir: str, classes=CLASSES) -> None:
+    """
+    Make sure the dataset folders (e.g. datasets/no and datasets/yes)
+    exist and contain at least one image each.
+    """
     for folder in classes:
         path = os.path.join(base_dir, folder)
         if not os.path.exists(path):
@@ -73,10 +75,15 @@ def check_dataset_dirs(base_dir: str, classes=CLASSES) -> None:
             raise SystemExit(1)
         print(f"Folder '{folder}' contains {len(images)} images")
 
+
 def _read_image_generic(image_path: str):
-    """Read an image from disk as RGB uint8, or return None on failure."""
+    """
+    Read an image from disk and return a PIL Image in RGB.
+    Returns None if reading fails.
+    """
     img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
     if img is not None:
+        # Handle grayscale, RGBA, and regular BGR images
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         elif len(img.shape) == 3 and img.shape[2] == 4:
@@ -91,8 +98,12 @@ def _read_image_generic(image_path: str):
             return None
     return pil
 
+
 def load_dataset_cnn(base_dir: str, input_size: int):
-    """Load dataset for CNN – output normalized to [0,1]."""
+    """
+    Load images for the CNN model.
+    Images are resized and normalized to [0, 1].
+    """
     dataset, labels, bad = [], [], 0
     for folder_name, class_label in [('no', 0), ('yes', 1)]:
         folder_path = os.path.join(base_dir, folder_name)
@@ -112,8 +123,12 @@ def load_dataset_cnn(base_dir: str, input_size: int):
     print(f"[CNN] Skipped unreadable/corrupt files: {bad}")
     return np.array(dataset, dtype=np.float32), np.array(labels, dtype=np.int32)
 
+
 def load_dataset_eff(base_dir: str, input_size: int):
-    """Load dataset for EfficientNet – apply EfficientNetB0 preprocess_input."""
+    """
+    Load images for the EfficientNet model.
+    Images are resized then passed through EfficientNetB0 preprocess_input.
+    """
     dataset, labels, bad = [], [], 0
     for folder_name, class_label in [('no', 0), ('yes', 1)]:
         folder_path = os.path.join(base_dir, folder_name)
@@ -128,16 +143,19 @@ def load_dataset_eff(base_dir: str, input_size: int):
                 continue
             pil = pil.resize((input_size, input_size), Image.BILINEAR)
             arr = np.asarray(pil, dtype=np.float32)
-            arr = preprocess_input(arr)  # EfficientNet preprocessing
+            arr = preprocess_input(arr)
             dataset.append(arr)
             labels.append(class_label)
     print(f"[EffNet] Skipped unreadable/corrupt files: {bad}")
     return np.array(dataset, dtype=np.float32), np.array(labels, dtype=np.int32)
 
-# -----------------------------
-# Build Models
-# -----------------------------
+
+# Model builders
 def build_cnn(input_size):
+    """
+    Small CNN with three convolution blocks and a dense head
+    for binary classification (no / yes).
+    """
     model = Sequential()
     model.add(tf.keras.layers.Input(shape=(input_size, input_size, 3)))
     model.add(Conv2D(32, (3, 3), kernel_initializer='he_uniform'))
@@ -165,7 +183,13 @@ def build_cnn(input_size):
     )
     return model
 
+
 def build_efficientnet(input_size):
+    """
+    Build an EfficientNetB0-based classifier:
+    - use imagenet weights as the feature extractor
+    - add a small dense head on top
+    """
     base = EfficientNetB0(
         weights='imagenet',
         include_top=False,
@@ -187,10 +211,13 @@ def build_efficientnet(input_size):
     )
     return model, base
 
-# -----------------------------
-# Helper for plots / artifacts
-# -----------------------------
+
+# Utility to create output folders and plots
 def ensure_artifacts_dir():
+    """
+    Create a folder train_artifacts/<timestamp> to store
+    weights, plots, and metrics for this run.
+    """
     out_root = Path("train_artifacts")
     out_root.mkdir(exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -198,8 +225,13 @@ def ensure_artifacts_dir():
     run_dir.mkdir(exist_ok=True)
     return out_root, run_dir
 
+
 def plot_curves(history, title_prefix, out_dir):
-    # Accuracy
+    """
+    Save training and validation accuracy/loss curves
+    as PNG images in the given output directory.
+    """
+    # Accuracy plot
     plt.figure()
     plt.plot(history.history['accuracy'], label='Train Acc')
     plt.plot(history.history['val_accuracy'], label='Val Acc')
@@ -211,7 +243,7 @@ def plot_curves(history, title_prefix, out_dir):
     plt.savefig(out_dir / f"{title_prefix.lower().replace(' ', '_')}_accuracy.png", dpi=160)
     plt.close()
 
-    # Loss
+    # Loss plot
     plt.figure()
     plt.plot(history.history['loss'], label='Train Loss')
     plt.plot(history.history['val_loss'], label='Val Loss')
@@ -223,18 +255,17 @@ def plot_curves(history, title_prefix, out_dir):
     plt.savefig(out_dir / f"{title_prefix.lower().replace(' ', '_')}_loss.png", dpi=160)
     plt.close()
 
-# -----------------------------
-# Main Training Process
-# -----------------------------
+
+# Main training entry point
 if __name__ == '__main__':
+    # Confirm dataset folders exist and contain images
     check_dataset_dirs(image_directory, classes=CLASSES)
 
+    # Create a timestamped folder to store results
     artifacts_root, run_dir = ensure_artifacts_dir()
 
-    # =========================================================
-    # MODEL 1: CNN (64x64)
-    # =========================================================
-    print("\n================= TRAINING MODEL 1: CNN (64x64) =================")
+    #  MODEL 1: CNN (64x64)
+    print("\nTRAINING MODEL 1: CNN (64x64)")
     dataset_cnn, label_cnn = load_dataset_cnn(image_directory, INPUT_SIZE_CNN)
     print(f"Total images loaded for CNN: {len(dataset_cnn)}")
     if len(dataset_cnn) == 0:
@@ -255,6 +286,7 @@ if __name__ == '__main__':
     y_train1_cat = to_categorical(y_train1, num_classes=2)
     y_val1_cat = to_categorical(y_val1, num_classes=2)
 
+    # Basic augmentation for CNN training
     datagen_cnn = ImageDataGenerator(
         rotation_range=15,
         width_shift_range=0.1,
@@ -295,23 +327,25 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    # Load best weights before saving final CNN models
+    # Reload the best CNN weights before final saving
     if (run_dir / "best_cnn.h5").exists():
         model_cnn.load_weights(run_dir / "best_cnn.h5")
 
-    # Save CNN models (for report and for web app)
+    # Save CNN to two filenames:
+    # - BrainTumorModel_CNN.h5 for experiments
+    # - BrainTumorModel.h5 as the deployed model for the Flask app
     model_cnn.save('BrainTumorModel_CNN.h5')
-    model_cnn.save('BrainTumorModel.h5')  # deployed model for Flask app
+    model_cnn.save('BrainTumorModel.h5')
     print("Model 1 saved as BrainTumorModel_CNN.h5 and BrainTumorModel.h5 (deployed model)")
 
-    # Final CNN metrics
+    # Extract final CNN metrics
     final_epoch_cnn = len(history_cnn.history['loss']) - 1
     train_acc_cnn  = history_cnn.history['accuracy'][final_epoch_cnn]
     val_acc_cnn    = history_cnn.history['val_accuracy'][final_epoch_cnn]
     train_loss_cnn = history_cnn.history['loss'][final_epoch_cnn]
     val_loss_cnn   = history_cnn.history['val_loss'][final_epoch_cnn]
 
-    print("\n=== MODEL 1 (CNN) FINAL RESULTS ===")
+    print("\nMODEL 1 (CNN) FINAL RESULTS")
     print(f"Training Accuracy:   {train_acc_cnn*100:.2f}%")
     print(f"Validation Accuracy: {val_acc_cnn*100:.2f}%")
     print(f"Training Loss:       {train_loss_cnn:.4f}")
@@ -319,10 +353,8 @@ if __name__ == '__main__':
 
     plot_curves(history_cnn, "CNN", run_dir)
 
-    # =========================================================
-    # MODEL 2: EfficientNetB0 (224x224)
-    # =========================================================
-    print("\n================= TRAINING MODEL 2: EfficientNetB0 (224x224) =================")
+    #  MODEL 2: EfficientNetB0 (224x224)
+    print("\nTRAINING MODEL 2: EfficientNetB0 (224x224)")
     dataset_eff, label_eff = load_dataset_eff(image_directory, INPUT_SIZE_EFF)
     print(f"Total images loaded for EfficientNet: {len(dataset_eff)}")
     if len(dataset_eff) == 0:
@@ -343,6 +375,7 @@ if __name__ == '__main__':
     y_train2_cat = to_categorical(y_train2, num_classes=2)
     y_val2_cat = to_categorical(y_val2, num_classes=2)
 
+    # Augmentation for EfficientNet training
     datagen_eff = ImageDataGenerator(
         rotation_range=20,
         width_shift_range=0.15,
@@ -355,6 +388,7 @@ if __name__ == '__main__':
     model_eff, base_eff = build_efficientnet(INPUT_SIZE_EFF)
     model_eff.summary()
 
+    # Stage 1: train classifier head with the base frozen
     callbacks_eff_stage1 = [
         EarlyStopping(
             monitor="val_loss",
@@ -376,7 +410,7 @@ if __name__ == '__main__':
         ),
     ]
 
-    # Stage 1: train classifier head with frozen base
+
     history_eff_stage1 = model_eff.fit(
         datagen_eff.flow(x_train2, y_train2_cat, batch_size=BATCH_SIZE_EFF, shuffle=True),
         validation_data=(x_val2, y_val2_cat),
@@ -388,7 +422,7 @@ if __name__ == '__main__':
     if (run_dir / "best_eff_stage1.h5").exists():
         model_eff.load_weights(run_dir / "best_eff_stage1.h5")
 
-    # Stage 2: fine-tune top layers of EfficientNet
+    # Stage 2: unfreeze top layers of EfficientNet and fine-tune
     print("\nUnfreezing top EfficientNet layers for fine-tuning...")
     for layer in base_eff.layers[:-40]:
         layer.trainable = False
@@ -430,7 +464,7 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    # Merge histories manually for final curves
+    # Combine stage 1 and stage 2 history for plotting and final metrics
     history_eff = history_eff_stage1
     for k in history_eff.history.keys():
         history_eff.history[k].extend(history_eff_stage2.history[k])
@@ -447,7 +481,7 @@ if __name__ == '__main__':
     train_loss_eff = history_eff.history['loss'][final_epoch_eff]
     val_loss_eff   = history_eff.history['val_loss'][final_epoch_eff]
 
-    print("\n=== MODEL 2 (EfficientNetB0) FINAL RESULTS ===")
+    print("\nMODEL 2 (EfficientNetB0) FINAL RESULTS")
     print(f"Training Accuracy:   {train_acc_eff*100:.2f}%")
     print(f"Validation Accuracy: {val_acc_eff*100:.2f}%")
     print(f"Training Loss:       {train_loss_eff:.4f}")
@@ -455,9 +489,7 @@ if __name__ == '__main__':
 
     plot_curves(history_eff, "EfficientNetB0", run_dir)
 
-    # =========================================================
-    # SAVE COMPARISON METRICS
-    # =========================================================
+    # Save a small JSON file comparing both models
     metrics = {
         "CNN": {
             "Training Accuracy": round(float(train_acc_cnn), 4),

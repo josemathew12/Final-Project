@@ -7,28 +7,44 @@
   <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#analyzeModal">Analyze New Scan</button>
 </div>
 
-<!-- KPIs -->
-<div class="row g-3">
-  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
-    <div class="text-muted">Total Scans</div>
-    <div class="h3 mb-0">{{ s.total }}</div>
-  </div></div></div>
-  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
-    <div class="text-muted">Tumor Detected</div>
-    <div class="h3 mb-0">{{ s.tumors }}</div>
-  </div></div></div>
-  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
-    <div class="text-muted">Non-Tumor</div>
-    <div class="h3 mb-0">{{ s.non_tumors }}</div>
-  </div></div></div>
-  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body">
-    <div class="text-muted">Avg Confidence</div>
-    <div class="h3 mb-0">{{ (s.avg_confidence * 100) | round(1) }}%</div>
-  </div></div></div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Total Scans</div>
+        <div class="h3 mb-0">{{ s.total }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Tumor Detected</div>
+        <div class="h3 mb-0">{{ s.tumors }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Non-Tumor</div>
+        <div class="h3 mb-0">{{ s.non_tumors }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Avg Confidence</div>
+        <div class="h3 mb-0">{{ (s.avg_confidence * 100) | round(1) }}%</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row g-3 mt-2">
-  <!-- Recent -->
+ 
   <div class="col-lg-8">
     <div class="card shadow-sm h-100">
       <div class="card-body">
@@ -36,14 +52,21 @@
         <ul class="list-group list-group-flush">
           {% for r in s.recent %}
           <li class="list-group-item d-flex align-items-center">
-            <img src="{{ url_for('static', filename='uploads/' ~ r.filename) }}" class="rounded me-3" style="width:56px;height:56px;object-fit:cover;">
+            <img src="{{ url_for('static', filename='uploads/' ~ r.filename) }}"
+                 class="rounded me-3"
+                 style="width:56px;height:56px;object-fit:cover;">
             <div class="flex-grow-1">
               <div class="fw-semibold">{{ r.filename }}</div>
               <div class="text-muted small">{{ r.created_at }}</div>
             </div>
-            <span class="badge {{ 'bg-danger' if r.label == 'Tumor' else 'bg-success' }} me-2">{{ r.label }}</span>
-            <span class="text-muted small">{{ (r.confidence * 100) | round(1) }}%</span>
-            <a class="btn btn-sm btn-outline-primary ms-3" href="{{ url_for('tumor_details', scan_id=r.id) }}">Open</a>
+            <span class="badge {{ 'bg-danger' if r.label == 'Tumor' else 'bg-success' }} me-2">
+              {{ r.label }}
+            </span>
+            <span class="text-muted small">
+              {{ (r.confidence * 100) | round(1) }}%
+            </span>
+            <a class="btn btn-sm btn-outline-primary ms-3"
+               href="{{ url_for('tumor_details', scan_id=r.id) }}">Open</a>
           </li>
           {% else %}
           <li class="list-group-item text-muted">No scans yet.</li>
@@ -53,18 +76,22 @@
     </div>
   </div>
 
-  <!-- Donut Chart -->
+ 
   <div class="col-lg-4">
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <h5 class="mb-3">Classification Overview</h5>
-        <canvas id="donutChart" height="240"></canvas>
+        {% if s.total > 0 %}
+          <canvas id="donutChart" height="240"></canvas>
+        {% else %}
+          <p class="text-muted small mb-0">No scans yet to show in chart.</p>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Analyze Modal -->
+
 <div class="modal fade" id="analyzeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -75,14 +102,23 @@
         </div>
 
         <div class="modal-body">
-          <!-- Patient details -->
+          
           <div class="row g-2 mb-2">
-            <div class="col-md-3"><input class="form-control" name="patient_id" placeholder="Patient ID" required></div>
-            <div class="col-md-5"><input class="form-control" name="name" placeholder="Name" required></div>
-            <div class="col-md-2"><input type="number" class="form-control" name="age" placeholder="Age" min="0"></div>
+            <div class="col-md-3">
+              <input class="form-control" name="patient_id" placeholder="Patient ID" required>
+            </div>
+            <div class="col-md-5">
+              <input class="form-control" name="name" placeholder="Name" required>
+            </div>
+            <div class="col-md-2">
+              <input type="number" class="form-control" name="age" placeholder="Age" min="0">
+            </div>
             <div class="col-md-2">
               <select class="form-control" name="sex">
-                <option value="">Sex</option><option>F</option><option>M</option><option>Other</option>
+                <option value="">Sex</option>
+                <option>F</option>
+                <option>M</option>
+                <option>Other</option>
               </select>
             </div>
           </div>
@@ -103,14 +139,30 @@
 
 {% block scripts %}
 <script>
-  (function renderDonut(tumor, nonTumor) {
-    const ctx = document.getElementById('donutChart');
-    if (!ctx) return;
+  document.addEventListener('DOMContentLoaded', function () {
+    const total = {{ s.total|int }};
+    if (total <= 0) return;  
+
+    const canvas = document.getElementById('donutChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
     new Chart(ctx, {
       type: 'doughnut',
-      data: { labels: ['Tumor', 'No Tumor'], datasets: [{ data: [tumor, nonTumor] }] },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      data: {
+        labels: ['Tumor', 'No Tumor'],
+        datasets: [{
+          data: [{{ s.tumors|int }}, {{ s.non_tumors|int }}],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
     });
-  })({{ s.tumors }}, {{ s.non_tumors }});
+  });
 </script>
 {% endblock %}
